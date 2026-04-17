@@ -1,0 +1,176 @@
+.index-page {
+  padding: 30px;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 40px;
+  padding-top: 10px;
+}
+
+.hero-title {
+  font-size: 40px;
+  font-weight: 700;
+  color: #333;
+  display: block;
+}
+
+.hero-desc {
+  font-size: 26px;
+  color: #999;
+  margin-top: 8px;
+  display: block;
+}
+
+.section {
+  margin-bottom: 40px;
+}
+
+.section-title {
+  font-size: 32px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.image-picker {
+  width: 100%;
+  min-height: 300px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #ddd;
+}
+
+.preview-image {
+  width: 100%;
+  height: auto;
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.plus {
+  font-size: 80px;
+  color: #ccc;
+  line-height: 1;
+}
+
+.tip {
+  font-size: 28px;
+  color: #999;
+  margin-top: 10px;
+}
+
+.size-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.size-item {
+  flex: 1;
+  min-width: 140px;
+  padding: 24px 16px;
+  background: #fff;
+  border-radius: 12px;
+  text-align: center;
+  border: 2px solid transparent;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  &.active {
+    border-color: #4a90d9;
+    background: #eef4fc;
+  }
+}
+
+.size-label {
+  font-size: 28px;
+  font-weight: 500;
+  color: #333;
+  display: block;
+}
+
+.size-count {
+  font-size: 24px;
+  color: #999;
+  margin-top: 6px;
+  display: block;
+}
+
+.custom-size {
+  margin-top: 20px;
+}
+
+.custom-input-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-size: 28px;
+  color: #666;
+}
+
+.custom-input {
+  width: 120px;
+  height: 60px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 28px;
+  background: #fff;
+}
+
+.brand-picker {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 24px;
+}
+
+.brand-picker-text {
+  font-size: 30px;
+  font-weight: 500;
+  color: #333;
+}
+
+.brand-picker-desc {
+  font-size: 24px;
+  color: #999;
+  margin-left: 12px;
+}
+
+.brand-picker-arrow {
+  font-size: 24px;
+  color: #999;
+  margin-left: auto;
+}
+
+.generate-btn {
+  width: 100%;
+  height: 96px;
+  background: linear-gradient(135deg, #4a90d9, #357abd);
+  border-radius: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.btn-text {
+  font-size: 34px;
+  font-weight: 600;
+  color: #fff;
+}
