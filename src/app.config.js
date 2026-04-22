@@ -14,5 +14,6 @@ export default defineAppConfig({
     'scope.writePhotosAlbum': {
       desc: '用于将生成的拼豆图纸保存到你的相册'
     }
-  }
+  },
+  lazyCodeLoading: 'requiredComponents'
 })
