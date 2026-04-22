@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import Taro from '@tarojs/taro'
 import { View, Text, ScrollView, Canvas } from '@tarojs/components'
+import { ensurePhotoAlbumAuth } from '../../utils/photoAuth'
 import './index.scss'
 
 const ROW_HEIGHT = 44
@@ -41,6 +42,8 @@ export default function Result() {
   const canvasH = HEADER_HEIGHT + sortedStats.length * ROW_HEIGHT + PADDING * 2
 
   const handleSave = async () => {
+    const allowed = await ensurePhotoAlbumAuth()
+    if (!allowed) return
     try {
       Taro.showLoading({ title: '生成图片...' })
 
@@ -151,13 +154,9 @@ export default function Result() {
                 Taro.hideLoading()
                 Taro.showToast({ title: '已保存到相册', icon: 'success' })
               },
-              fail: (e) => {
+              fail: () => {
                 Taro.hideLoading()
-                if (e.errMsg && e.errMsg.includes('deny')) {
-                  Taro.showToast({ title: '请授权相册权限', icon: 'none' })
-                } else {
-                  Taro.showToast({ title: '保存失败', icon: 'none' })
-                }
+                Taro.showToast({ title: '保存失败', icon: 'none' })
               }
             })
           },

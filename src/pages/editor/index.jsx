@@ -3,6 +3,7 @@ import Taro, { useRouter } from '@tarojs/taro'
 import { View, Text, Canvas, Image } from '@tarojs/components'
 import { imageToBeadGrid, loadImagePixels } from '../../utils/pixelate'
 import { drawBeadPattern, canvasToImage, getPatternCanvasSize } from '../../utils/beadCanvas'
+import { ensurePhotoAlbumAuth } from '../../utils/photoAuth'
 import './index.scss'
 
 const PATTERN_CELL_SIZE = 24
@@ -56,6 +57,8 @@ export default function Editor() {
 
   const handleSave = async () => {
     if (!patternImage) return
+    const allowed = await ensurePhotoAlbumAuth()
+    if (!allowed) return
     try {
       Taro.showLoading({ title: '保存中...' })
       await Taro.saveImageToPhotosAlbum({ filePath: patternImage })
@@ -63,11 +66,7 @@ export default function Editor() {
       Taro.showToast({ title: '已保存到相册', icon: 'success' })
     } catch (e) {
       Taro.hideLoading()
-      if (e.errMsg && e.errMsg.includes('deny')) {
-        Taro.showToast({ title: '请授权相册权限', icon: 'none' })
-      } else {
-        Taro.showToast({ title: '保存失败', icon: 'none' })
-      }
+      Taro.showToast({ title: '保存失败', icon: 'none' })
     }
   }
 
