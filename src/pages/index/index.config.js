@@ -1,3 +1,3 @@
 export default definePageConfig({
-  navigationBarTitleText: '拼豆图纸生成工坊'
+  navigationBarTitleText: '拼豆图画家'
 })

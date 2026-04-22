@@ -4,3 +4,5 @@ dist
 .DS_Store
 project.private.config.json
 color-data
+cloud/all
+cloud/cloud1-*

@@ -1,7 +1,9 @@
 {
   "miniprogramRoot": "dist/",
+  "cloudfunctionRoot": "cloud/functions/",
+  "cloudbaseRoot": "cloud/",
   "projectname": "bead-art",
-  "description": "拼豆图纸生成工坊",
+  "description": "简约-拼豆图画家",
   "appid": "wx2bb548a91e20bfcf",
   "setting": {
     "urlCheck": false,

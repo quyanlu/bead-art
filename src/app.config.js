@@ -7,7 +7,7 @@ export default defineAppConfig({
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#ffffff',
-    navigationBarTitleText: '拼豆图纸生成工坊',
+    navigationBarTitleText: '拼豆图画家',
     navigationBarTextStyle: 'black'
   }
 })
