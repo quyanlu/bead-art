@@ -1,8 +1,75 @@
-import { useState } from 'react'
-import Taro from '@tarojs/taro'
+import { useState, useEffect } from 'react'
+import Taro, { useShareAppMessage, useShareTimeline, useRouter } from '@tarojs/taro'
 import { View, Text, Image, Input, Picker, Canvas } from '@tarojs/components'
 import { BOARD_SIZES, BRANDS } from '../../constants/palettes'
 import './index.scss'
+
+const generateHomeShareImage = () => {
+  return new Promise((resolve, reject) => {
+    Taro.createSelectorQuery()
+      .select('#share-canvas-home')
+      .fields({ node: true, size: true })
+      .exec((res) => {
+        if (!res || !res[0] || !res[0].node) {
+          reject(new Error('share canvas not found'))
+          return
+        }
+        const canvas = res[0].node
+        const ctx = canvas.getContext('2d')
+        const SIZE = 500
+        const dpr = Taro.getSystemInfoSync().pixelRatio
+        canvas.width = SIZE * dpr
+        canvas.height = SIZE * dpr
+        ctx.scale(dpr, dpr)
+
+        ctx.fillStyle = '#faf7f2'
+        ctx.fillRect(0, 0, SIZE, SIZE)
+
+        const pixelColors = [
+          '#f4a6a6', '#a6c8f4', '#a6f4b5', '#f4e9a6', '#d9a6f4',
+          '#a6f4e9', '#f4b8a6', '#f4a6d9', '#b5a6f4', '#c8f4a6',
+          '#f4a6a6', '#ffffff', '#f4e9a6', '#ffffff', '#a6c8f4',
+          '#a6f4b5', '#f4b8a6', '#ffffff', '#d9a6f4', '#f4a6d9',
+          '#ffffff', '#a6f4e9', '#b5a6f4', '#f4e9a6', '#c8f4a6'
+        ]
+        const cell = 36
+        const gap = 4
+        const gridW = cell * 5 + gap * 4
+        const gridX = (SIZE - gridW) / 2
+        const gridY = 70
+        pixelColors.forEach((c, i) => {
+          const row = Math.floor(i / 5)
+          const col = i % 5
+          ctx.fillStyle = c
+          const x = gridX + col * (cell + gap)
+          const y = gridY + row * (cell + gap)
+          ctx.fillRect(x, y, cell, cell)
+        })
+
+        ctx.fillStyle = '#2d2d2d'
+        ctx.font = 'bold 32px sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText('简约·拼豆图画家', SIZE / 2, 320)
+
+        ctx.fillStyle = '#888'
+        ctx.font = '20px sans-serif'
+        ctx.fillText('一张图片 · 秒变拼豆图纸', SIZE / 2, 360)
+
+        ctx.fillStyle = '#d98585'
+        ctx.font = '16px sans-serif'
+        ctx.fillText('DIY · 创意 · 治愈', SIZE / 2, 430)
+
+        Taro.canvasToTempFilePath({
+          canvas,
+          fileType: 'jpg',
+          quality: 0.9,
+          success: (r) => resolve(r.tempFilePath),
+          fail: reject
+        })
+      })
+  })
+}
 
 const compressByCanvas = (src) => {
   return new Promise((resolve, reject) => {
@@ -45,11 +112,54 @@ const compressByCanvas = (src) => {
 }
 
 export default function Index() {
+  const router = useRouter()
+  const fromShare = router.params.from || ''
+  const sharedSize = router.params.size || ''
+
   const [selectedSize, setSelectedSize] = useState(0)
   const [selectedBrand, setSelectedBrand] = useState(0)
   const [customW, setCustomW] = useState(29)
   const [customH, setCustomH] = useState(29)
   const [imagePath, setImagePath] = useState('')
+  const [shareImg, setShareImg] = useState('')
+
+  useEffect(() => {
+    if (!sharedSize) return
+    const m = sharedSize.match(/^(\d+)x(\d+)$/)
+    if (!m) return
+    const w = Number(m[1])
+    const h = Number(m[2])
+    if (!w || !h) return
+    const matchIdx = BOARD_SIZES.findIndex((b) => b.width === w && b.height === h)
+    if (matchIdx >= 0) {
+      setSelectedSize(matchIdx)
+    } else {
+      setSelectedSize(BOARD_SIZES.length)
+      setCustomW(Math.min(100, Math.max(5, w)))
+      setCustomH(Math.min(100, Math.max(5, h)))
+    }
+  }, [sharedSize])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      generateHomeShareImage()
+        .then(setShareImg)
+        .catch((e) => console.warn('[share] home share image generate fail', e))
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [])
+
+  useShareAppMessage(() => ({
+    title: '一张图片，秒变拼豆图纸',
+    path: '/pages/index/index?from=share_home',
+    imageUrl: shareImg || undefined
+  }))
+
+  useShareTimeline(() => ({
+    title: '简约·拼豆图画家 | 一张图秒变拼豆图纸',
+    query: 'from=share_home',
+    imageUrl: shareImg || undefined
+  }))
 
   const handleChooseImage = () => {
     Taro.chooseImage({
@@ -149,10 +259,27 @@ export default function Index() {
         id='compress-canvas'
         style='position:fixed;left:-9999px;top:-9999px;width:1024px;height:1024px;'
       />
+      <Canvas
+        type='2d'
+        id='share-canvas-home'
+        style='position:fixed;left:-9999px;top:-9999px;width:500px;height:500px;'
+      />
       <View className='hero'>
         <Text className='hero-title'>简约·拼豆图画家</Text>
         <Text className='hero-desc'>一张图片，秒变拼豆图纸</Text>
       </View>
+
+      {fromShare && (
+        <View className='share-banner'>
+          <Text className='share-banner-text'>
+            {fromShare === 'share_editor' && sharedSize
+              ? `朋友做了张 ${sharedSize} 拼豆图纸 · 你也来一张`
+              : fromShare === 'share_result' && sharedSize
+                ? `朋友生成了色号清单 · 一张图秒变图纸`
+                : '朋友推荐 · 一张图秒变拼豆图纸'}
+          </Text>
+        </View>
+      )}
 
       <View className='section'>
         <Text className='section-title'>选择图片</Text>

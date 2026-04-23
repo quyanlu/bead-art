@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import Taro from '@tarojs/taro'
+import Taro, { useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { View, Text, ScrollView, Canvas } from '@tarojs/components'
 import { ensurePhotoAlbumAuth } from '../../utils/photoAuth'
 import './index.scss'
@@ -9,10 +9,93 @@ const CANVAS_WIDTH = 600
 const HEADER_HEIGHT = 100
 const PADDING = 20
 
+const generateResultShareImage = (stats, gridSize) => {
+  return new Promise((resolve, reject) => {
+    Taro.createSelectorQuery()
+      .select('#share-canvas-result')
+      .fields({ node: true, size: true })
+      .exec((res) => {
+        if (!res || !res[0] || !res[0].node) {
+          reject(new Error('share canvas not found'))
+          return
+        }
+        const canvas = res[0].node
+        const ctx = canvas.getContext('2d')
+        const SIZE = 500
+        const dpr = Taro.getSystemInfoSync().pixelRatio
+        canvas.width = SIZE * dpr
+        canvas.height = SIZE * dpr
+        ctx.scale(dpr, dpr)
+
+        ctx.fillStyle = '#faf7f2'
+        ctx.fillRect(0, 0, SIZE, SIZE)
+
+        const topColors = [...stats]
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 8)
+        const dotR = 18
+        const dotGap = 14
+        const totalDotW = topColors.length * (dotR * 2) + (topColors.length - 1) * dotGap
+        const dotStartX = (SIZE - totalDotW) / 2 + dotR
+        const dotY = 80
+        topColors.forEach((c, i) => {
+          const x = dotStartX + i * (dotR * 2 + dotGap)
+          ctx.fillStyle = `rgb(${c.r},${c.g},${c.b})`
+          ctx.beginPath()
+          ctx.arc(x, dotY, dotR, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.strokeStyle = 'rgba(0,0,0,0.06)'
+          ctx.lineWidth = 1
+          ctx.stroke()
+        })
+
+        const totalBeads = gridSize.width * gridSize.height
+
+        ctx.fillStyle = '#2d2d2d'
+        ctx.font = 'bold 30px sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText('我做了张拼豆图纸', SIZE / 2, 200)
+
+        ctx.fillStyle = '#d98585'
+        ctx.font = 'bold 28px sans-serif'
+        ctx.fillText(`${gridSize.width} × ${gridSize.height}  ·  ${totalBeads} 颗`, SIZE / 2, 260)
+
+        ctx.fillStyle = '#888'
+        ctx.font = '20px sans-serif'
+        ctx.fillText(`共用 ${stats.length} 种颜色`, SIZE / 2, 305)
+
+        ctx.strokeStyle = '#e5ddd0'
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.moveTo(SIZE / 2 - 80, 360)
+        ctx.lineTo(SIZE / 2 + 80, 360)
+        ctx.stroke()
+
+        ctx.fillStyle = '#666'
+        ctx.font = '18px sans-serif'
+        ctx.fillText('简约 · 拼豆图画家', SIZE / 2, 400)
+
+        ctx.fillStyle = '#bbb'
+        ctx.font = '14px sans-serif'
+        ctx.fillText('点我也做一张 →', SIZE / 2, 440)
+
+        Taro.canvasToTempFilePath({
+          canvas,
+          fileType: 'jpg',
+          quality: 0.9,
+          success: (r) => resolve(r.tempFilePath),
+          fail: reject
+        })
+      })
+  })
+}
+
 export default function Result() {
   const [stats, setStats] = useState([])
   const [gridSize, setGridSize] = useState({ width: 29, height: 29 })
   const [sortBy, setSortBy] = useState('code')
+  const [shareImg, setShareImg] = useState('')
 
   useEffect(() => {
     try {
@@ -24,6 +107,28 @@ export default function Result() {
       console.error('读取数据失败:', e)
     }
   }, [])
+
+  useEffect(() => {
+    if (!stats.length) return
+    const timer = setTimeout(() => {
+      generateResultShareImage(stats, gridSize)
+        .then(setShareImg)
+        .catch((e) => console.warn('[share] result share image generate fail', e))
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [stats, gridSize])
+
+  useShareAppMessage(() => ({
+    title: `我做了张 ${gridSize.width}×${gridSize.height} 拼豆图纸，你也来试试`,
+    path: `/pages/index/index?from=share_result&size=${gridSize.width}x${gridSize.height}`,
+    imageUrl: shareImg || undefined
+  }))
+
+  useShareTimeline(() => ({
+    title: '简约·拼豆图画家 | 一张图秒变拼豆图纸',
+    query: `from=share_result&size=${gridSize.width}x${gridSize.height}`,
+    imageUrl: shareImg || undefined
+  }))
 
   const sortedStats = useMemo(() => {
     if (sortBy === 'count') return [...stats].sort((a, b) => b.count - a.count)
@@ -179,6 +284,11 @@ export default function Result() {
         id='list-canvas'
         canvasId='list-canvas'
         style={`position:fixed;left:-9999px;width:${CANVAS_WIDTH}px;height:${canvasH}px;`}
+      />
+      <Canvas
+        type='2d'
+        id='share-canvas-result'
+        style='position:fixed;left:-9999px;top:-9999px;width:500px;height:500px;'
       />
 
       <View className='overview'>
